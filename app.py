@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends
 from pydantic import BaseModel, Field
-from sqlalchemy import create_engine,Column, String, Integer
+from sqlalchemy import create_engine,Column, String, Integer, and_,or_
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 
@@ -53,6 +53,7 @@ class UpdateUser(BaseModel):
 
 @app.post("/updateUser/{id}")
 async def updateUser(id:int,details:UpdateUser,db:Session = Depends(get_db)):
+    
     user = db.query(User).filter(User.id == id).first()
     if details.name:
         user.name = details.name
@@ -61,3 +62,35 @@ async def updateUser(id:int,details:UpdateUser,db:Session = Depends(get_db)):
     
     db.commit()
     return "updated"
+
+
+class Params(BaseModel):
+    name:str = Field(default=None)
+    age:int = Field(default=None)
+    search:str = Field(default=None)
+
+@app.post("/getusercustom")
+async def get_user(dets:Params,db:Session = Depends(get_db)):
+
+    if dets.search:
+        result = db.query(User).filter(User.name.like(f"%{dets.search}%")).all()
+        return {"search results":result}
+    
+    if dets.name and dets.age:
+        and_result = db.query(User).filter(and_(User.name.like(f"%{dets.name}%"),User.age == dets.age))
+        or_result = db.query(User).filter(or_(User.name.like(f"%{dets.name}%"),User.age == dets.age))
+
+        return {"and":and_result,"or":or_result}
+    
+    if dets.name:
+        result = db.query(User).filter(User.name.like(f"%{dets.name}%")).all()
+        return {"name result":result}
+    
+    if dets.age:
+        result = db.query(User).filter(User.age == dets.age).all()
+        return {"age result":result}
+    
+    else:
+        result = db.query(User).all()
+        return result
+    return "returned"
