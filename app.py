@@ -77,8 +77,8 @@ async def get_user(dets:Params,db:Session = Depends(get_db)):
         return {"search results":result}
     
     if dets.name and dets.age:
-        and_result = db.query(User).filter(and_(User.name.like(f"%{dets.name}%"),User.age == dets.age))
-        or_result = db.query(User).filter(or_(User.name.like(f"%{dets.name}%"),User.age == dets.age))
+        and_result = db.query(User).filter(and_(User.name.like(f"%{dets.name}%"),User.age == dets.age)).all()
+        or_result = db.query(User).filter(or_(User.name.like(f"%{dets.name}%"),User.age == dets.age)).all()
 
         return {"and":and_result,"or":or_result}
     
